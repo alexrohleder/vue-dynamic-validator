@@ -1,59 +1,69 @@
 
-module.exports = {
+export default {
     data: {
+        validations: {
+            // define your validations
+            // use a model name as key and a object with validations.
+            // eg. user: { 'required': true }
+        },
         validator: {
             valid: null
         }
     },
+
+    watch: {
+        validations() {
+            this.validate();
+        }
+    }
+    
     methods: {
         validate() {
             this.validator.valid = true
-            for (let i in this.validations) {
-                this.validator[i] = {valid: true}
-                for (let k in this.validations[i]) {
-                     let rule = k.charAt(0).toUpperCase() + k.slice(1)
-                    this.validator[i][k] = this[`validate${rule}Field`](this[i], this.validations[i][k])
-                    this.validator[i]['valid'] = this.validator[i][k] ? this.validator[i]['valid'] : false
-                    this.validator.valid = this.validator[i][k] ? this.validator.valid : false
+
+            for (const i in this.validations) {
+                this.validator[i] = { valid: true }
+
+                for (const j in this.validations[i]) {
+                     const validation = 'validate' + j.charAt(0).toUpperCase() + j.slice(1) + 'Field'
+
+                    this.validator[i][j] = this[validate](this[i], this.validations[i][j])
+                    this.validator[i].valid = this.validator[i][j] ? this.validator[i].valid : false
+                    this.validator.valid = this.validator[i][j] ? this.validator.valid : false
                 }
             }
+
             return this.validator.valid
         },
+
         validateMinlengthField(value, options) {
             return value.length >= options
         },
+
         validateMaxlengthField(value, options) {
             return value.length <= options
         },
+
         validateRequiredField(value, options) {
-            if (options == true) {
-                   return value ? true : false
-            } else return true
+            if (options === true) {
+                   return !!value
+            } else return  !value
         },
+
         validateNumericField(value, options) {
             switch (options) {
-                case 'all_numbers': return /^[-+]?[0-9]+$/.test(value); break;
-                case 'positive_numbers': return /^[0-9]+$/.test(value); break;
+                case 'positives': return /^[0-9]+$/.test(value)
+                case 'negatives': return /^\-[0-9]+$/.test(value)
+                default: return /^[-+]?[0-9]+$/.test(value)
             }
         },
+
         validateCepField(value, options) {
             return /^([0-9]){5}\-([0-9]){3}$/.test(value)
         },
+
         validateEmailField(value, options) {
             return /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(value)
-        },
-        getValidationErrorMessages() {
-            let err = []
-            for (let i in this.validator) {
-                if (!this.validator[i].valid) {
-                    for (let k in this.validator[i]) {
-                        if (!this.validator[i][k] && k != 'valid' && this.validations[i][k].error) {
-                            err.push(this.validations[i][k].error)
-                        }
-                    }
-                }
-            }
-            return err;
         },
     }
 }
